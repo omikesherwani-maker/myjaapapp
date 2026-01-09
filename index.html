@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sadhna - Digital Jaap Counter</title>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; text-align: center; user-select: none; }
+        .header { padding: 20px; border-bottom: 1px solid #222; background: #000; z-index: 10; }
+        select { background: #000; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; font-size: 16px; width: 80%; outline: none; }
+        .counter-container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: background 0.1s; }
+        .counter-container:active { background: #111; }
+        #mantra-display { font-size: 28px; margin-bottom: 20px; font-weight: 300; letter-spacing: 1px; color: #eee; }
+        #main-count { font-size: 120px; font-weight: bold; margin: 0; line-height: 1; }
+        .stats { margin-top: 20px; font-size: 18px; color: #888; }
+        .footer { padding: 25px; border-top: 1px solid #222; display: flex; justify-content: space-around; background: #000; }
+        .btn { background: none; border: 1px solid #444; color: #fff; padding: 12px 25px; border-radius: 50px; font-size: 14px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn:hover { background: #fff; color: #000; }
+        .progress-bar { width: 80%; height: 4px; background: #222; margin-top: 15px; border-radius: 2px; }
+        #progress { width: 0%; height: 100%; background: #fff; border-radius: 2px; transition: width 0.2s; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <select id="mantraSelector" onchange="updateMantra()">
+            <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+            <option value="नमो भगवते वासुदेवाय">नमो भगवते वासुदेवाय</option>
+            <option value="श्री राम जय राम">श्री राम जय राम</option>
+            <option value="हरे कृष्ण हरे कृष्ण">हरे कृष्ण हरे कृष्ण</option>
+            <option value="हनुमान चालीसा">हनुमान चालीसा</option>
+        </select>
+    </div>
+
+    <div class="counter-container" onclick="handleTap()">
+        <div id="mantra-display">ॐ नमः शिवाय</div>
+        <div id="main-count">0</div>
+        <div class="progress-bar"><div id="progress"></div></div>
+        <div class="stats" id="stats-display">Mala: 0 | Beads: 0/108</div>
+        <p style="font-size: 12px; color: #444; margin-top: 40px;">TAP ANYWHERE TO CHANT</p>
+    </div>
+
+    <div class="footer">
+        <button class="btn" onclick="resetCounter(event)">Reset</button>
+        <button class="btn" onclick="shareProgress(event)">Share</button>
+    </div>
+
+    <script>
+        let totalCount = parseInt(localStorage.getItem('jaap_total')) || 0;
+        let currentMantra = "ॐ नमः शिवाय";
+
+        function updateDisplay() {
+            document.getElementById('main-count').innerText = totalCount;
+            let malas = Math.floor(totalCount / 108);
+            let beads = totalCount % 108;
+            document.getElementById('stats-display').innerText = `Mala: ${malas} | Beads: ${beads}/108`;
+            document.getElementById('progress').style.width = (beads / 108 * 100) + "%";
+            document.getElementById('mantra-display').innerText = currentMantra;
+        }
+
+        function handleTap() {
+            totalCount++;
+            localStorage.setItem('jaap_total', totalCount);
+            if (navigator.vibrate) navigator.vibrate(50);
+            updateDisplay();
+        }
+
+        function updateMantra() {
+            currentMantra = document.getElementById('mantraSelector').value;
+            updateDisplay();
+        }
+
+        function resetCounter(e) {
+            e.stopPropagation();
+            if(confirm("Reset all progress?")) {
+                totalCount = 0;
+                localStorage.setItem('jaap_total', 0);
+                updateDisplay();
+            }
+        }
+
+        function shareProgress(e) {
+            e.stopPropagation();
+            const text = `मैंने आज "${currentMantra}" का ${totalCount} बार जाप किया। आप भी अपनी साधना शुरू करें: ${window.location.href}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
