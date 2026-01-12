@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mindful Jaap - Professional</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --glass-color: rgba(255, 255, 255, 0.1);
+            --border-color: #333333;
+        }
+        body.light-mode {
+            --bg-color: #f5f5f5;
+            --text-color: #000000;
+            --glass-color: rgba(0, 0, 0, 0.05);
+            --border-color: #dddddd;
+        }
+        body { 
+            background: var(--bg-color); color: var(--text-color); 
+            font-family: sans-serif; margin: 0; transition: 0.3s; 
+            display: flex; flex-direction: column; height: 100vh; 
+            overflow: hidden; text-align: center;
+        }
+        .header { 
+            padding: 15px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid var(--border-color);
+        }
+        .menu-btn { background: none; border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+        .counter-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        .glass-box {
+            background: var(--glass-color); backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 50%; width: 200px; height: 200px;
+            display: flex; flex-direction: column; justify-content: center;
+            border: 2px solid var(--border-color);
+        }
+        #main-count { font-size: 80px; font-weight: bold; margin: 0; }
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-color); z-index: 100; padding: 20px; box-sizing: border-box; 
+        }
+        .setting-row { display: flex; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--border-color); align-items: center; }
+        .flower { position: fixed; top: -20px; font-size: 24px; animation: fall linear forwards; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="menu-btn" onclick="event.stopPropagation(); openModal('statsModal')">Stats</button>
+        <div style="font-weight: bold;">Mindful Jaap</div>
+        <button class="menu-btn" onclick="event.stopPropagation(); openModal('settingsModal')">Settings</button>
+    </div>
+
+    <div class="counter-section" onclick="handleTap()">
+        <div id="active-mantra" style="margin-bottom: 20px; font-size: 22px; font-style: italic;">ॐ नमः शिवाय</div>
+        <div class="glass-box">
+            <div id="main-count">0</div>
+            <div style="font-size: 12px; opacity: 0.6;">JAPS</div>
+        </div>
+        <div id="mala-info" style="margin-top: 25px; font-size: 18px; opacity: 0.7;">Mala: 0 | Beads: 0/108</div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Settings</h3>
+            <button class="menu-btn" onclick="closeModal('settingsModal')">Done</button>
+        </div>
+        <div class="setting-row">
+            <span>Theme</span>
+            <button class="menu-btn" onclick="toggleTheme()">Dark/Light</button>
+        </div>
+        <div class="setting-row">
+            <span>Sound</span>
+            <input type="checkbox" id="soundOn" checked>
+        </div>
+        <div class="setting-row">
+            <span>Mantra</span>
+            <select id="mantraList" onchange="changeMantra()" style="background:none; color:inherit; border:1px solid var(--border-color); padding:5px;">
+                <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+                <option value="नमो भगवते वासुदेवाय">नमो भगवते वासुदेवाय</option>
+                <option value="श्री राम जय राम">श्री राम जय राम</option>
+            </select>
+        </div>
+        <button onclick="resetData()" style="color: red; margin-top: 30px; background: none; border: none; cursor: pointer;">Reset All</button>
+    </div>
+
+    <div id="statsModal" class="modal">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Stats</h3>
+            <button class="menu-btn" onclick="closeModal('statsModal')">Back</button>
+        </div>
+        <div class="setting-row"><span>Total Jaaps</span><b id="total-stat">0</b></div>
+        <div class="setting-row"><span>Total Malas</span><b id="mala-stat">0</b></div>
+    </div>
+
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <script>
+        let jaapData = JSON.parse(localStorage.getItem('mindful_data')) || { total: 0, malas: 0 };
+        let currentMantra = "ॐ नमः शिवाय";
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+
+        function handleTap() {
+            jaapData.total++;
+            if(document.getElementById('soundOn').checked) {
+                let s = document.getElementById('clickSound'); s.currentTime = 0; s.play().catch(()=>{});
+            }
+            if(navigator.vibrate) navigator.vibrate(40);
+            if(jaapData.total % 108 === 0) {
+                jaapData.malas++;
+                startFlowers();
+            }
+            saveAndUI();
+        }
+
+        function saveAndUI() {
+            localStorage.setItem('mindful_data', JSON.stringify(jaapData));
+            document.getElementById('main-count').innerText = jaapData.total;
+            document.getElementById('total-stat').innerText = jaapData.total;
+            document.getElementById('mala-stat').innerText = jaapData.malas;
+            let beads = jaapData.total % 108;
+            document.getElementById('mala-info').innerText = `Mala: ${jaapData.malas} | Beads: ${beads}/108`;
+            document.getElementById('active-mantra').innerText = currentMantra;
+        }
+
+        function changeMantra() { currentMantra = document.getElementById('mantraList').value; saveAndUI(); }
+        function resetData() { if(confirm("Reset data?")) { jaapData={total:0,malas:0}; saveAndUI(); } }
+
+        function startFlowers() {
+            for(let i=0; i<20; i++) {
+                const f = document.createElement('div'); f.className = 'flower'; f.innerText = '🌸';
+                f.style.left = Math.random() * 100 + 'vw'; f.style.animationDuration = (Math.random()*2+2)+'s';
+                document.body.appendChild(f); setTimeout(()=>f.remove(), 4000);
+            }
+        }
+        saveAndUI();
+    </script>
+</body>
+</html>
