@@ -3,105 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sadhna - Pro Jaap App</title>
+    <title>Mindful Jaap - Professional</title>
     <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --glass-color: rgba(255, 255, 255, 0.1);
+            --border-color: #333333;
+        }
+
+        /* Light Mode Styles */
+        body.light-mode {
+            --bg-color: #f5f5f5;
+            --text-color: #000000;
+            --glass-color: rgba(0, 0, 0, 0.05);
+            --border-color: #dddddd;
+        }
+
         body { 
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1507692049790-de58290a4334?auto=format&fit=crop&q=80&w=2070');
-            background-size: cover; background-position: center; color: #fff; font-family: 'Georgia', serif; 
-            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; text-align: center; user-select: none;
+            background: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; transition: 0.3s; 
+            display: flex; flex-direction: column; 
+            height: 100vh; overflow: hidden; text-align: center;
         }
-        .header { padding: 20px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); }
-        select { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #fff; padding: 10px; border-radius: 30px; font-size: 16px; width: 70%; text-align: center; outline: none; }
-        .counter-container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
-        .glass-box { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(8px); padding: 40px; border-radius: 50%; width: 220px; height: 220px; display: flex; flex-direction: column; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 0 50px rgba(255,255,255,0.1); transition: transform 0.1s; }
-        .glass-box:active { transform: scale(0.95); }
+
+        .header { 
+            padding: 15px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid var(--border-color);
+            background: var(--bg-color); z-index: 10;
+        }
+
+        .menu-btn { background: none; border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 14px; }
+
+        .counter-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        
+        .glass-box {
+            background: var(--glass-color); backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 50%; width: 200px; height: 200px;
+            display: flex; flex-direction: column; justify-content: center;
+            border: 2px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
         #main-count { font-size: 80px; font-weight: bold; margin: 0; }
-        .stats { margin-top: 20px; font-size: 18px; color: #ccc; letter-spacing: 1px; }
-        .footer { padding: 25px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: flex; justify-content: space-around; }
-        .btn { background: none; border: 1px solid #fff; color: #fff; padding: 10px 30px; border-radius: 5px; cursor: pointer; }
-        /* Flower Animation */
-        .flower { position: fixed; top: -20px; font-size: 24px; z-index: 999; pointer-events: none; animation: fall linear forwards; }
-        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
-    </style>
-</head>
-<body>
 
-    <div class="header">
-        <select id="mantraSelector" onchange="updateMantra()">
-            <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
-            <option value="नमो भगवते वासुदेवाय">नमो भगवते वासुदेवाय</option>
-            <option value="श्री राम जय राम">श्री राम जय राम</option>
-        </select>
-    </div>
-
-    <div class="counter-container" onclick="handleTap()">
-        <div id="mantra-display" style="font-size: 24px; margin-bottom: 20px; font-style: italic;">ॐ नमः शिवाय</div>
-        <div class="glass-box">
-            <div id="main-count">0</div>
-            <div style="font-size: 12px; opacity: 0.6;">JAPS</div>
-        </div>
-        <div class="stats" id="stats-display">MALA: 0 | BEADS: 0/108</div>
-    </div>
-
-    <audio id="jaapSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
-
-    <div class="footer">
-        <button class="btn" onclick="resetCounter(event)">RESET</button>
-        <button class="btn" onclick="shareProgress(event)">SHARE</button>
-    </div>
-
-    <script>
-        let totalCount = parseInt(localStorage.getItem('jaap_total')) || 0;
-        let currentMantra = "ॐ नमः शिवाय";
-        const audio = document.getElementById('jaapSound');
-
-        function updateDisplay() {
-            document.getElementById('main-count').innerText = totalCount;
-            let malas = Math.floor(totalCount / 108);
-            let beads = totalCount % 108;
-            document.getElementById('stats-display').innerText = `MALA: ${malas} | BEADS: ${beads}/108`;
-            document.getElementById('mantra-display').innerText = currentMantra;
+        /* Settings Modal */
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-color); z-index: 100; padding: 20px; box-sizing: border-box; 
         }
 
-        function handleTap() {
-            totalCount++;
-            localStorage.setItem('jaap_total', totalCount);
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
-            if (navigator.vibrate) navigator.vibrate(40);
-            if (totalCount % 108 === 0) startFlowerRain();
-            updateDisplay();
-        }
-
-        function startFlowerRain() {
-            for (let i = 0; i < 30; i++) {
-                const flower = document.createElement('div');
-                flower.classList.add('flower');
-                flower.innerText = '🌸';
-                flower.style.left = Math.random() * 100 + 'vw';
-                flower.style.animationDuration = Math.random() * 3 + 2 + 's';
-                document.body.appendChild(flower);
-                setTimeout(() => flower.remove(), 5000);
-            }
-        }
-
-        function updateMantra() {
-            currentMantra = document.getElementById('mantraSelector').value;
-            updateDisplay();
-        }
-
-        function resetCounter(e) {
-            e.stopPropagation();
-            if(confirm("रिसेट करें?")) { totalCount = 0; localStorage.setItem('jaap_total', 0); updateDisplay(); }
-        }
-
-        function shareProgress(e) {
-            e.stopPropagation();
-            const text = `मैंने आज "${currentMantra}" का ${totalCount} बार जाप किया। आप भी अपनी साधना शुरू करें: ${window.location.href}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-        }
-
-        updateDisplay();
-    </script>
-</body>
-</html>
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        
+        .setting-row { display: flex; justify
