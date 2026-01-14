@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mindful Jaap - Ultimate Sadhna</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --bg: #ffffff; --text: #000; --accent: #ff9800; --border: #eee; --card: #f9f9f9; }
+        body.dark { --bg: #000; --text: #fff; --border: #222; --card: #111; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; transition: 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden; text-align: center; }
+        
+        #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 500; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
+        input { padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; }
+
+        .header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .live-users { font-size: 12px; color: #4CAF50; font-weight: bold; animation: blink 2s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        
+        .main-ui { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        .counter-circle { width: 230px; height: 230px; border-radius: 50%; border: 10px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+        #main-num { font-size: 80px; font-weight: bold; }
+
+        .modal { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 200; padding: 20px; overflow-y: auto; text-align: left; }
+        .close-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 20px; float: right; }
+
+        /* Certificate Styling */
+        #certificateModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 600; align-items: center; justify-content: center; padding: 10px; }
+        #certificateContent { background: #fff; color: #000; padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; text-align: center; border: 10px double #d4af37; position: relative; }
+        
+        /* Your Logo in Certificate */
+        .logo-box { width: 80px; height: 80px; margin: 0 auto 10px; border-radius: 50%; overflow: hidden; border: 2px solid #eee; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .list-item { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; border-left: 5px solid var(--accent); }
+        .flower { position: fixed; top: -20px; font-size: 24px; animation: fall linear forwards; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="onboarding">
+        <h1 style="color:var(--accent)">Mindful Jaap</h1>
+        <p>Set up your Spiritual Identity</p>
+        <input type="text" id="userName" placeholder="Full Name">
+        <input type="text" id="userLoc" placeholder="City/Location">
+        <button onclick="saveUser()" style="background:var(--accent); color:white; border:none; padding:15px; border-radius:10px; font-size:18px;">Create Profile</button>
+    </div>
+
+    <div class="header">
+        <div>
+            <div class="live-users">● <span id="online-count">1,204</span> Sadhu Online</div>
+            <div style="font-size:10px; opacity:0.7">ID: <span id="u-id">---</span></div>
+        </div>
+        <div>
+            <button onclick="openModal('leaderboardModal')" style="background:none; border:none; font-size:20px;">🏆</button>
+            <button onclick="openModal('historyModal')" style="background:none; border:none; font-size:20px;">📊</button>
+            <button onclick="openModal('settingsModal')" style="background:none; border:none; font-size:20px;">⚙️</button>
+        </div>
+    </div>
+
+    <div id="daily-quote" style="padding:8px; font-size:12px; opacity:0.8; border-bottom:1px solid var(--border)">Loading...</div>
+
+    <div class="main-ui" onclick="handleTap()">
+        <div style="margin-bottom:10px; font-size:14px;">🔥 Streak: <span id="streak-num">0</span> Days</div>
+        <div id="active-mantra" style="font-size:20px; color:var(--accent); font-weight:bold; margin-bottom:15px;">ॐ नमः शिवाय</div>
+        <div class="counter-circle" id="circle-ui">
+            <div id="main-num">0</div>
+            <div style="font-size:12px;">JAPS</div>
+        </div>
+        <div id="mala-info" style="margin-top:20px; font-weight:bold;">Mala: 0 | Goal: 1</div>
+    </div>
+
+    <div id="certificateModal">
+        <div id="certificateContent">
+            <div class="logo-box">
+                <img src="https://i.ibb.co/VWVX5vP/IMG-20260112-112432-969.webp" alt="Logo">
+            </div>
+            <h2 style="color:#d4af37; margin:5px 0;">SADHNA PURNAM</h2>
+            <p style="font-size:0.9em;">प्रमाणित किया जाता है कि</p>
+            <h3 id="cert-user" style="font-size:1.5em; margin:10px 0; text-decoration: underline;"></h3>
+            <p style="font-size:0.9em;">ने <b>Mindful Jaap</b> पर सफलतापूर्वक अपनी साधना पूर्ण की।</p>
+            <div style="margin:10px 0; font-size:0.85em; text-align:left; background:#f9f9f9; padding:10px; border-radius:5px;">
+                <div><b>Mantra:</b> <span id="cert-mantra"></span></div>
+                <div><b>Malas Done:</b> <span id="cert-malas"></span></div>
+                <div><b>Location:</b> <span id="cert-loc"></span></div>
+                <div><b>Date:</b> <span id="cert-date"></span></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-top:10px;">
+                <span style="font-weight:bold; color:#E1306C; font-size:12px;">Instagram:</span>
+                <span style="font-weight:bold; font-size:12px;">@mindful.jaap</span>
+            </div>
+            <button onclick="downloadCert()" style="background:#d4af37; color:white; border:none; padding:10px 20px; border-radius:10px; margin-top:15px; cursor:pointer;">Download PNG</button>
+            <p onclick="closeModal('certificateModal')" style="margin-top:10px; cursor:pointer; opacity:0.5; font-size:12px;">Close</p>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <button class="close-btn" onclick="closeModal('historyModal')">Done</button>
+        <h2>Stats & Graph</h2>
+        <canvas id="weeklyChart" style="max-height:200px;"></canvas>
+        <h3>Recent Records</h3>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="leaderboardModal" class="modal">
+        <button class="close-btn" onclick="closeModal('leaderboardModal')">Done</button>
+        <h2>Top 10 Sadhaks</h2>
+        <div id="leader-list"></div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <button class="close-btn" onclick="closeModal('settingsModal')">Done</button>
+        <h2>Settings</h2>
+        <p>Goal: <select id="goalSet" onchange="updateGoal()"><option value="1">1 Mala</option><option value="11">11 Malas</option><option value="21">21 Malas</option><option value="108">108 Malas</option></select></p>
+        <p>Sound: <select id="sList" onchange="changeSound()"><option value="">None</option><option value="river">Holy River</option><option value="bell">Temple Bell</option><option value="om">Deep Om</option><option value="birds">Forest</option><option value="bowl">Singing Bowl</option></select></p>
+        <p>Mantra: <select id="mList" onchange="changeMantra()">
+            <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+            <option value="ॐ घृणि सूर्याय नमः">ॐ घृणि सूर्याय नमः</option>
+            <option value="ॐ सोमाय नमः">ॐ सोमाय नमः</option>
+            <option value="ॐ हम हनुमंते नमः">ॐ हम हनुमंते नमः</option>
+            <option value="ॐ गं गणपतये नमः">ॐ गं गणपतये नमः</option>
+            <option value="ॐ रां राहवे नमः">ॐ रां राहवे नमः</option>
+            <option value="ॐ श्याम देवाय नमः">ॐ श्याम देवाय नमः</option>
+        </select></p>
+        <button onclick="toggleTheme()" style="width:100%; padding:10px; margin-top:10px; border-radius:10px; border:1px solid #ccc; background:var(--bg); color:var(--text);">Switch Theme</button>
+    </div>
+
+    <audio id="click-sound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="alert-100" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <audio id="bgAudio" loop></audio>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('mj_final_v2')) || { total: 0, malas: 0, streak: 0, lastDate: '', goal: 1, history: [], uid: '' };
+        let user = JSON.parse(localStorage.getItem('mj_user')) || null;
+        let activeM = "ॐ नमः शिवाय";
+        let myChart = null;
+
+        const sounds = { river: "https://www.soundjay.com/nature/river-1.mp3", bell: "https://www.orangefreesounds.com/wp-content/uploads/2020/09/Large-temple-bell-sound.mp3", om: "https://www.buddhanet.net/audio/om_mani_padme_hum.mp3", birds: "https://www.soundjay.com/nature/sounds/rain-forest-1.mp3", bowl: "https://www.orangefreesounds.com/wp-content/uploads/2016/11/Singing-bowl-sound.mp3" };
+        const quotes = ["शांत मन ही सबसे बड़ी शक्ति है।", "साधना से ही शुद्धि संभव है।", "जप से अंतर्मन प्रकाशित होता है।", "Every chant is a step towards divinity."];
+
+        if(user) { 
+            document.getElementById('onboarding').style.display = 'none'; 
+            document.getElementById('u-id').innerText = db.uid;
+        }
+
+        function saveUser() {
+            let n = document.getElementById('userName').value;
+            let l = document.getElementById('userLoc').value;
+            if(n && l) {
+                db.uid = n.toLowerCase().replace(/\s/g, '') + Math.floor(1000 + Math.random() * 9000);
+                user = { name: n, loc: l };
+                localStorage.setItem('mj_user', JSON.stringify(user));
+                localStorage.setItem('mj_final_v2', JSON.stringify(db));
+                location.reload();
+            }
+        }
+
+        function handleTap() {
+            db.total++;
+            let beads = db.total % 108;
+            document.getElementById('click-sound').currentTime=0; document.getElementById('click-sound').play();
+
+            if(beads === 100) {
+                document.getElementById('alert-100').play();
+                if(navigator.vibrate) navigator.vibrate([300, 100, 300]);
+            }
+
+            if(beads === 0 && db.total !== 0) {
+                db.malas++;
+                spawnFlowers();
+                checkStreak();
+                db.history.push({ mantra: activeM, time: new Date().toISOString(), day: new Date().toLocaleDateString('en-US', {weekday: 'short'}) });
+                if(db.malas >= db.goal) showCert();
+            }
+            updateUI();
+        }
+
+        function showCert() {
+            document.getElementById('cert-user').innerText = user.name;
+            document.getElementById('cert-mantra').innerText = activeM;
+            document.getElementById('cert-malas').innerText = db.malas;
+            document.getElementById('cert-loc').innerText = user.loc;
+            document.getElementById('cert-date').innerText = new Date().toLocaleString();
+            document.getElementById('certificateModal').style.display = 'flex';
+        }
+
+        function downloadCert() {
+            const cert = document.getElementById('certificateContent');
+            html2canvas(cert, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Certificate_${db.uid}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function updateUI() {
+            localStorage.setItem('mj_final_v2', JSON.stringify(db));
+            document.getElementById('main-num').innerText = db.total;
+            document.getElementById('streak-num').innerText = db.streak;
+            document.getElementById('mala-info').innerText = `Mala: ${db.malas} | Goal: ${db.goal}`;
+            document.getElementById('circle-ui').style.borderColor = (db.total % 108 >= 100) ? '#ff4444' : 'var(--accent)';
+        }
+
+        function checkStreak() {
+            let today = new Date().toDateString();
+            if(db.lastDate !== today) {
+                db.streak++;
+                db.lastDate = today;
+            }
+        }
+
+        function openModal(id) { 
+            document.getElementById(id).style.display = 'block'; 
+            if(id==='historyModal') { renderGraph(); renderHistoryList(); }
+            if(id==='leaderboardModal') renderLeaderboard();
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleTheme() { document.body.classList.toggle('dark'); }
+        function changeMantra() { activeM = document.getElementById('mList').value; document.getElementById('active-mantra').innerText = activeM; }
+        function changeSound() { let s = document.getElementById('sList').value; let b = document.getElementById('bgAudio'); if(s){ b.src=sounds[s]; b.play(); } else { b.pause(); } }
+        function updateGoal() { db.goal = document.getElementById('goalSet').value; updateUI(); }
+
+        function renderHistoryList() {
+            document.getElementById('history-list').innerHTML = db.history.slice().reverse().slice(0, 5).map(h => `<div class="list-item"><span>${h.mantra}</span> <small>${new Date(h.time).toLocaleDateString()}</small></div>`).join('') || "No history yet.";
+        }
+
+        function renderGraph() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            const dayCounts = {Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0};
+            db.history.forEach(i => { if(dayCounts[i.day] !== undefined) dayCounts[i.day]++; });
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dayCounts), datasets: [{ label: 'Malas Completed', data: Object.values(dayCounts), backgroundColor: '#ff9800' }] } });
+        }
+
+        function renderLeaderboard() {
+            let names = ["Aryan_98", "RahulSadhak", "Mira_Soul", "Zen_Sadhana", db.uid, "Om_Shanti", "Vashu_11", "Vinamrata_P", "Bhakti_Path", "Prakash_R"];
+            document.getElementById('leader-list').innerHTML = names.map((n, i) => `<div class="list-item"><span>#${i+1} ${n}</span> <b>${Math.floor(50 - i*3)} Malas</b></div>`).join('');
+        }
+
+        function spawnFlowers() {
+            for(let i=0; i<15; i++) {
+                let f = document.createElement('div'); f.className='flower'; f.innerText='🌸';
+                f.style.left = Math.random()*100+'vw'; f.style.animationDuration = (Math.random()*2+2)+'s';
+                document.body.appendChild(f); setTimeout(()=>f.remove(), 3500);
+            }
+        }
+
+        setInterval(() => { document.getElementById('online-count').innerText = (1200 + Math.floor(Math.random() * 50)).toLocaleString(); }, 5000);
+        document.getElementById('daily-quote').innerText = `"${quotes[Math.floor(Math.random()*quotes.length)]}"`;
+        updateUI();
+    </script>
+</body>
+</html>
