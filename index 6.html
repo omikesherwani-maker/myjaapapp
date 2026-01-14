@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mindful Jaap - Sadhna App</title>
+    <style>
+        :root { --bg: #ffffff; --text: #000; --glass: rgba(0,0,0,0.05); --border: #ddd; }
+        body.dark { --bg: #000; --text: #fff; --glass: rgba(255,255,255,0.1); --border: #333; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', serif; margin: 0; transition: 0.3s; display: flex; flex-direction: column; height: 100vh; overflow: hidden; text-align: center; }
+        
+        .header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .streak-val { color: #ff9800; font-weight: bold; font-size: 14px; }
+        .quote-box { padding: 10px; font-style: italic; font-size: 13px; min-height: 40px; opacity: 0.8; }
+        
+        .counter-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+        .progress-svg { position: absolute; width: 280px; height: 280px; transform: rotate(-90deg); }
+        .progress-svg circle { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.3s; }
+        .bg-circle { stroke: var(--glass); }
+        .fg-circle { stroke: #ff9800; stroke-dasharray: 754; stroke-dashoffset: 754; }
+
+        .glass-box { width: 200px; height: 200px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; z-index: 1; }
+        #main-count { font-size: 70px; font-weight: bold; margin: 0; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .setting-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border); align-items: center; }
+        
+        .share-card { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg); border: 2px solid var(--border); padding: 20px; border-radius: 15px; z-index: 110; width: 80%; }
+        .flower { position: fixed; top: -20px; font-size: 24px; animation: fall linear forwards; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+        button { background: none; border: 1px solid var(--text); color: var(--text); padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="streak-val">🔥 Streak: <span id="streak-num">0</span> Days</div>
+        <button onclick="openModal('settingsModal')">Settings</button>
+    </div>
+
+    <div class="quote-box" id="daily-quote">"शांत मन ही सबसे बड़ी शक्ति है।"</div>
+
+    <div class="counter-section" onclick="handleTap()">
+        <svg class="progress-svg"><circle class="bg-circle" cx="140" cy="140" r="120"></circle><circle class="fg-circle" id="progress-bar" cx="140" cy="140" r="120"></circle></svg>
+        <div id="active-mantra" style="margin-bottom: 20px; font-size: 18px;">ॐ नमः शिवाय</div>
+        <div class="glass-box">
+            <div id="main-count">0</div>
+            <div style="font-size: 10px; opacity: 0.6;">JAPS</div>
+        </div>
+        <div id="mala-info" style="margin-top: 25px; font-size: 16px; opacity: 0.7;">Mala: 0 | Goal: 0/1</div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <h3>Settings</h3>
+        <div class="setting-row"><span>Theme</span><button onclick="toggleTheme()">Switch Dark/Light</button></div>
+        <div class="setting-row"><span>Mala Goal</span><select id="goalSet" onchange="updateGoal()"><option value="1">1 Mala</option><option value="11">11 Malas</option><option value="21">21 Malas</option><option value="51">51 Malas</option><option value="108">108 Malas</option></select></div>
+        <div class="setting-row"><span>Nature Sound</span><input type="checkbox" id="ambientOn" onchange="toggleAmbient()"></div>
+        <div class="setting-row"><span>Select Mantra</span><select id="mantraList" onchange="changeMantra()">
+            <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option><option value="ॐ घृणि सूर्याय नमः">ॐ घृणि सूर्याय नमः</option>
+            <option value="ॐ हम हनुमंते नमः">ॐ हम हनुमंते नमः</option><option value="ॐ गं गणपतये नमः">ॐ गं गणपतये नमः</option>
+            <option value="ॐ श्याम देवाय नमः">ॐ श्याम देवाय नमः</option>
+        </select></div>
+        <button onclick="closeModal('settingsModal')" style="width: 100%; margin-top: 20px;">Done</button>
+    </div>
+
+    <div id="shareCard" class="share-card">
+        <h2 style="color:#ff9800">Sadhna Complete! 🌸</h2>
+        <p id="share-text"></p>
+        <p style="font-size: 12px; opacity: 0.7;">Screenshot this to share on Instagram!</p>
+        <button onclick="document.getElementById('shareCard').style.display='none'">Close</button>
+    </div>
+
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="ambientSound" loop src="https://www.soundjay.com/nature/river-1.mp3"></audio>
+
+    <script>
+        let data = JSON.parse(localStorage.getItem('mindful_pro_v3')) || { total: 0, malas: 0, streak: 0, lastDate: '', goal: 1 };
+        let currentMantra = "ॐ नमः शिवाय";
+        const quotes = ["शांत मन ही सबसे बड़ी शक्ति है।", "साधना से ही शुद्धि संभव है।", "जप से अंतर्मन प्रकाशित होता है।", "धैर्य ही भक्ति का आधार है।", "ईश्वर आपके भीतर ही है।"];
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleTheme() { document.body.classList.toggle('dark'); }
+        function toggleAmbient() { let s = document.getElementById('ambientSound'); document.getElementById('ambientOn').checked ? s.play() : s.pause(); }
+
+        function handleTap() {
+            data.total++;
+            let beads = data.total % 108;
+            if(beads === 100 && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            if(navigator.vibrate && beads !== 100) navigator.vibrate(40);
+            
+            let s = document.getElementById('clickSound'); s.currentTime = 0; s.play().catch(()=>{});
+            
+            if(beads === 0 && data.total !== 0) {
+                data.malas++;
+                checkStreak();
+                if(data.malas >= data.goal) showShareCard();
+                startFlowers();
+            }
+            saveAndUI();
+        }
+
+        function checkStreak() {
+            let today = new Date().toDateString();
+            if(data.lastDate !== today) {
+                data.streak++;
+                data.lastDate = today;
+            }
+        }
+
+        function saveAndUI() {
+            localStorage.setItem('mindful_pro_v3', JSON.stringify(data));
+            document.getElementById('main-count').innerText = data.total;
+            document.getElementById('streak-num').innerText = data.streak;
+            let beads = data.total % 108;
+            document.getElementById('mala-info').innerText = `Mala: ${data.malas} | Goal: ${data.malas}/${data.goal}`;
+            document.getElementById('active-mantra').innerText = currentMantra;
+            
+            // Progress Bar Logic
+            let offset = 754 - (beads / 108) * 754;
+            document.getElementById('progress-bar').style.strokeDashoffset = offset;
+        }
+
+        function showShareCard() {
+            document.getElementById('shareCard').style.display = 'block';
+            document.getElementById('share-text').innerText = `मैंने आज ${data.malas} माला "${currentMantra}" का जाप पूर्ण किया। 🔥 Streak: ${data.streak} Days`;
+        }
+
+        function updateGoal() { data.goal = document.getElementById('goalSet').value; saveAndUI(); }
+        function changeMantra() { currentMantra = document.getElementById('mantraList').value; saveAndUI(); }
+        function startFlowers() {
+            for(let i=0; i<25; i++) {
+                const f = document.createElement('div'); f.className = 'flower'; f.innerText = '🌸';
+                f.style.left = Math.random() * 100 + 'vw'; f.style.animationDuration = (Math.random()*2+2)+'s';
+                document.body.appendChild(f); setTimeout(()=>f.remove(), 4000);
+            }
+        }
+
+        // Random Quote
+        document.getElementById('daily-quote').innerText = `"${quotes[Math.floor(Math.random()*quotes.length)]}"`;
+        saveAndUI();
+    </script>
+</body>
+</html>
