@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mindful Jaap - Professional</title>
+    <style>
+        :root {
+            --bg-color: #ffffff; /* Default White Theme */
+            --text-color: #000000;
+            --glass-color: rgba(0, 0, 0, 0.05);
+            --border-color: #dddddd;
+        }
+        body.dark-mode {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --glass-color: rgba(255, 255, 255, 0.1);
+            --border-color: #333333;
+        }
+        body { 
+            background: var(--bg-color); color: var(--text-color); 
+            font-family: 'Segoe UI', sans-serif; margin: 0; transition: 0.3s; 
+            display: flex; flex-direction: column; height: 100vh; 
+            overflow: hidden; text-align: center;
+        }
+        .header { 
+            padding: 15px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid var(--border-color);
+        }
+        .menu-btn { background: none; border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+        .counter-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        .glass-box {
+            background: var(--glass-color); backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 50%; width: 220px; height: 220px;
+            display: flex; flex-direction: column; justify-content: center;
+            border: 2px solid var(--border-color);
+        }
+        #main-count { font-size: 80px; font-weight: bold; margin: 0; color: var(--text-color); }
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-color); z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto;
+        }
+        .setting-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border-color); align-items: center; text-align: left;}
+        select { background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px; border-radius: 5px; width: 60%; }
+        .flower { position: fixed; top: -20px; font-size: 24px; animation: fall linear forwards; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="menu-btn" onclick="event.stopPropagation(); openModal('statsModal')">Stats</button>
+        <div style="font-weight: bold;">Mindful Jaap</div>
+        <button class="menu-btn" onclick="event.stopPropagation(); openModal('settingsModal')">Settings</button>
+    </div>
+
+    <div class="counter-section" onclick="handleTap()">
+        <div id="active-mantra" style="margin-bottom: 20px; font-size: 20px; font-weight: 500;">ॐ नमः शिवाय</div>
+        <div class="glass-box">
+            <div id="main-count">0</div>
+            <div style="font-size: 12px; opacity: 0.6;">JAPS</div>
+        </div>
+        <div id="mala-info" style="margin-top: 25px; font-size: 18px; opacity: 0.7;">Mala: 0 | Beads: 0/108</div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Settings</h3>
+            <button class="menu-btn" onclick="closeModal('settingsModal')">Done</button>
+        </div>
+        <div class="setting-row">
+            <span>Theme Mode</span>
+            <button class="menu-btn" onclick="toggleTheme()">Switch Dark/Light</button>
+        </div>
+        <div class="setting-row">
+            <span>Select Mantra</span>
+            <select id="mantraList" onchange="changeMantra()">
+                <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+                <option value="ॐ घृणि सूर्याय नमः">ॐ घृणि सूर्याय नमः</option>
+                <option value="ॐ सोमाय नमः">ॐ सोमाय नमः</option>
+                <option value="ॐ केतवे नमः">ॐ केतवे नमः</option>
+                <option value="ॐ हम हनुमंते नमः">ॐ हम हनुमंते नमः</option>
+                <option value="ॐ अं अंगारकाय नमः">ॐ अं अंगारकाय नमः</option>
+                <option value="ॐ बुध बुधाय नमः">ॐ बुध बुधाय नमः</option>
+                <option value="ॐ गं गणपतये नमः">ॐ गं गणपतये नमः</option>
+                <option value="ॐ नमो वेंकटेशाय नमः">ॐ नमो वेंकटेशाय नमः</option>
+                <option value="ॐ बृं बृहस्पतये नमः">ॐ बृं बृहस्पतये नमः</option>
+                <option value="ॐ शुं शुक्राय नमः">ॐ शुं शुक्राय नमः</option>
+                <option value="ॐ शं शनैश्चराय नमः">ॐ शं शनैश्चराय नमः</option>
+                <option value="ॐ रां राहवे नमः">ॐ रां राहवे नमः</option>
+                <option value="ॐ श्याम देवाय नमः">ॐ श्याम देवाय नमः</option>
+            </select>
+        </div>
+        <div class="setting-row">
+            <span>Sound</span>
+            <input type="checkbox" id="soundOn" checked>
+        </div>
+        <button onclick="resetData()" style="color: red; margin-top: 30px; background: none; border: none; cursor: pointer; width: 100%;">Reset All Progress</button>
+    </div>
+
+    <div id="statsModal" class="modal">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Your Sadhna</h3>
+            <button class="menu-btn" onclick="closeModal('statsModal')">Back</button>
+        </div>
+        <div class="setting-row"><span>Total Jaaps</span><b id="total-stat">0</b></div>
+        <div class="setting-row"><span>Total Malas</span><b id="mala-stat">0</b></div>
+    </div>
+
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <script>
+        let jaapData = JSON.parse(localStorage.getItem('mindful_v2_data')) || { total: 0, malas: 0 };
+        let currentMantra = "ॐ नमः शिवाय";
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function toggleTheme() { 
+            document.body.classList.toggle('dark-mode'); 
+        }
+
+        function handleTap() {
+            jaapData.total++;
+            let beads = jaapData.total % 108;
+
+            // 100th Bead Vibrate Alert
+            if(beads === 100) {
+                if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            }
+
+            if(document.getElementById('soundOn').checked) {
+                let s = document.getElementById('clickSound'); s.currentTime = 0; s.play().catch(()=>{});
+            }
+            
+            if(navigator.vibrate && beads !== 100) navigator.vibrate(40);
+
+            if(beads === 0 && jaapData.total !== 0) {
+                jaapData.malas++;
+                startFlowers();
+            }
+            saveAndUI();
+        }
+
+        function saveAndUI() {
+            localStorage.setItem('mindful_v2_data', JSON.stringify(jaapData));
+            document.getElementById('main-count').innerText = jaapData.total;
+            document.getElementById('total-stat').innerText = jaapData.total;
+            document.getElementById('mala-stat').innerText = jaapData.malas;
+            let beads = jaapData.total % 108;
+            document.getElementById('mala-info').innerText = `Mala: ${jaapData.malas} | Beads: ${beads}/108`;
+            document.getElementById('active-mantra').innerText = currentMantra;
+        }
+
+        function changeMantra() { 
+            currentMantra = document.getElementById('mantraList').value; 
+            saveAndUI(); 
+        }
+
+        function resetData() { 
+            if(confirm("Reset all data?")) { 
+                jaapData={total:0,malas:0}; 
+                saveAndUI(); 
+            } 
+        }
+
+        function startFlowers() {
+            for(let i=0; i<25; i++) {
+                const f = document.createElement('div'); f.className = 'flower'; f.innerText = '🌸';
+                f.style.left = Math.random() * 100 + 'vw'; f.style.animationDuration = (Math.random()*2+2)+'s';
+                document.body.appendChild(f); setTimeout(()=>f.remove(), 4000);
+            }
+        }
+        saveAndUI();
+    </script>
+</body>
+</html>
