@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mindful Jaap - Global Sadhna Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #ffffff; --text: #000; --accent: #ff9800; --border: #eee; --card: #f9f9f9; }
+        body.dark { --bg: #000; --text: #fff; --border: #222; --card: #111; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; transition: 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex; flex-direction: column; justify-content: center; padding: 30px; text-align: center; }
+        input { padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; }
+        
+        .header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .main-ui { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        .counter-circle { width: 220px; height: 220px; border-radius: 50%; border: 8px solid var(--accent); display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        #main-num { font-size: 75px; font-weight: bold; }
+
+        .modal { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 100; padding: 20px; overflow-y: auto; text-align: left; }
+        .close-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 20px; float: right; cursor: pointer; }
+        
+        .chart-container { background: var(--card); padding: 15px; border-radius: 15px; margin: 20px 0; border: 1px solid var(--border); }
+        .history-item { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid var(--accent); }
+        
+        select { padding: 10px; border-radius: 8px; background: var(--card); color: var(--text); width: 100%; border: 1px solid var(--border); margin-top: 5px; }
+        .flower { position: fixed; top: -20px; font-size: 24px; animation: fall linear forwards; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="onboarding">
+        <h1 style="color: var(--accent)">Welcome</h1>
+        <p>Please enter your details to start your Sadhna</p>
+        <input type="text" id="userName" placeholder="Name">
+        <input type="text" id="userLoc" placeholder="Location (e.g. Raipur, India)">
+        <button onclick="saveUser()" style="background: var(--accent); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; margin-top: 10px;">Start Sadhna</button>
+    </div>
+
+    <div class="header">
+        <div id="user-info" style="font-size: 14px; opacity: 0.8;">जाप शुरू करें...</div>
+        <div>
+            <button onclick="openModal('historyModal')" style="background: none; border: 1px solid var(--text); color: var(--text); padding: 5px 15px; border-radius: 15px;">Stats</button>
+            <button onclick="openModal('settingsModal')" style="background: none; border: none; font-size: 20px;">⚙️</button>
+        </div>
+    </div>
+
+    <div class="main-ui" onclick="handleTap()">
+        <div id="display-mantra" style="margin-bottom: 20px; font-size: 22px; font-weight: 500; color: var(--accent);">ॐ नमः शिवाय</div>
+        <div class="counter-circle">
+            <div id="main-num">0</div>
+            <div style="font-size: 10px; opacity: 0.5; letter-spacing: 2px;">COUNT</div>
+        </div>
+        <div id="mala-text" style="margin-top: 25px; font-size: 18px; opacity: 0.7;">Mala: 0 | Beads: 0/108</div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <button class="close-btn" onclick="closeModal('historyModal')">Done</button>
+        <h2>आपकी प्रगति (Weekly Stats)</h2>
+        <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
+        <h3>हालिया साधना (Recent History)</h3>
+        <div id="history-list">इतिहास अभी उपलब्ध नहीं है...</div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <button class="close-btn" onclick="closeModal('settingsModal')">Done</button>
+        <h2>Settings</h2>
+        <div style="margin-top: 30px;">
+            <p>Theme: <button onclick="toggleTheme()" style="background: var(--card); color: var(--text); padding: 8px; border: 1px solid var(--border); border-radius: 5px;">Toggle Dark/Light</button></p>
+            <p>Mantra: 
+                <select id="mList" onchange="changeMantra()">
+                    <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+                    <option value="ॐ हम हनुमंते नमः">ॐ हम हनुमंते नमः</option>
+                    <option value="ॐ गं गणपतये नमः">ॐ गं गणपतये नमः</option>
+                    <option value="ॐ सोमाय नमः">ॐ सोमाय नमः</option>
+                </select>
+            </p>
+            <p>Sadhna Sounds: 
+                <select id="sList" onchange="changeSound()">
+                    <option value="">None</option>
+                    <option value="river">Holy River</option>
+                    <option value="bell">Temple Bell</option>
+                    <option value="om">Deep Cosmic Om</option>
+                    <option value="birds">Forest Morning</option>
+                </select>
+            </p>
+        </div>
+    </div>
+
+    <audio id="click" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="bg" loop></audio>
+
+    <script>
+        let u = JSON.parse(localStorage.getItem('m_u')) || null;
+        let h = JSON.parse(localStorage.getItem('m_h')) || [];
+        let count = 0;
+        let activeM = "ॐ नमः शिवाय";
+        let myChart = null;
+
+        const sounds = {
+            river: "https://www.soundjay.com/nature/river-1.mp3",
+            bell: "https://www.orangefreesounds.com/wp-content/uploads/2020/09/Large-temple-bell-sound.mp3",
+            om: "https://www.buddhanet.net/audio/om_mani_padme_hum.mp3",
+            birds: "https://www.soundjay.com/nature/sounds/rain-forest-1.mp3"
+        };
+
+        if(u) {
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('user-info').innerText = `नमस्ते, ${u.name} | ${u.loc}`;
+        }
+
+        function saveUser() {
+            let n = document.getElementById('userName').value;
+            let l = document.getElementById('userLoc').value;
+            if(n && l) {
+                u = {name: n, loc: l};
+                localStorage.setItem('m_u', JSON.stringify(u));
+                location.reload();
+            }
+        }
+
+        function handleTap() {
+            count++;
+            let tick = document.getElementById('click'); tick.currentTime=0; tick.play();
+            if(count % 108 === 100 && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            if(count % 108 === 0) { recordData(); spawnFlowers(); }
+            updateUI();
+        }
+
+        function recordData() {
+            let day = new Date().toLocaleDateString('en-US', {weekday: 'short'});
+            let entry = { mantra: activeM, time: new Date().toISOString(), day: day };
+            h.push(entry);
+            localStorage.setItem('m_h', JSON.stringify(h));
+        }
+
+        function updateUI() {
+            document.getElementById('main-num').innerText = count;
+            document.getElementById('mala-text').innerText = `Mala: ${Math.floor(count/108)} | Beads: ${count % 108}/108`;
+        }
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'block';
+            if(id === 'historyModal') { renderGraph(); renderList(); }
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleTheme() { document.body.classList.toggle('dark'); }
+        function changeMantra() { activeM = document.getElementById('mList').value; document.getElementById('display-mantra').innerText = activeM; }
+        
+        function changeSound() {
+            let s = document.getElementById('sList').value;
+            let b = document.getElementById('bg');
+            if(s) { b.src = sounds[s]; b.play(); } else { b.pause(); }
+        }
+
+        function renderList() {
+            let list = document.getElementById('history-list');
+            if(h.length === 0) { list.innerHTML = "साधना शुरू करें..."; return; }
+            list.innerHTML = h.slice().reverse().slice(0, 5).map(i => `
+                <div class="history-item"><b>${i.mantra}</b><br><small>${new Date(i.time).toLocaleString()}</small></div>
+            `).join('');
+        }
+
+        function renderGraph() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            const dayCounts = {Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0};
+            h.forEach(i => { if(dayCounts[i.day] !== undefined) dayCounts[i.day]++; });
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    datasets: [{ label: 'Malas Completed', data: Object.values(dayCounts), backgroundColor: '#ff9800', borderRadius: 5 }]
+                },
+                options: { scales: { y: { beginAtZero: true, grid: { display: false } } } }
+            });
+        }
+
+        function spawnFlowers() {
+            for(let i=0; i<20; i++) {
+                let f = document.createElement('div'); f.className='flower'; f.innerText='🌸';
+                f.style.left = Math.random()*100+'vw'; f.style.animationDuration = (Math.random()*2+2)+'s';
+                document.body.appendChild(f); setTimeout(()=>f.remove(), 4000);
+            }
+        }
+    </script>
+</body>
+</html>
