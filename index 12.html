@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mindful Jaap - Ultimate Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --bg: #ffffff; --text: #000; --accent: #ff9800; --border: #eee; --card: #f9f9f9; --gold: #d4af37; }
+        body.dark { --bg: #000; --text: #fff; --border: #222; --card: #111; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; transition: 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden; text-align: center; }
+        
+        #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
+        input { padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; }
+
+        .header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .live-users { font-size: 12px; color: #4CAF50; font-weight: bold; }
+        
+        .global-goal-container { background: #fff3e0; padding: 5px; font-size: 11px; font-weight: bold; color: #e65100; border-bottom: 1px solid #ffe0b2; }
+        #global-progress-bar { height: 4px; background: #ff9800; width: 65%; margin: 5px auto; border-radius: 2px; }
+
+        .main-ui { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+        .bead-string { position: absolute; top: 10%; width: 10px; height: 150px; background: #5d4037; border-radius: 5px; z-index: -1; }
+        .bead { width: 40px; height: 40px; background: radial-gradient(circle at 30% 30%, #8d6e63, #5d4037); border-radius: 50%; position: absolute; transition: 0.2s transform; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+
+        .counter-circle { width: 220px; height: 220px; border-radius: 50%; border: 8px solid var(--accent); display: flex; flex-direction: column; justify-content: center; background: var(--bg); z-index: 10; position: relative; }
+        #main-num { font-size: 70px; font-weight: bold; }
+
+        .badges-row { display: flex; gap: 8px; }
+        .badge-icon { font-size: 22px; filter: grayscale(1); opacity: 0.3; transition: 0.5s; }
+        .badge-icon.active { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
+
+        .modal { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 200; padding: 20px; overflow-y: auto; text-align: left; }
+        .close-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 20px; float: right; cursor: pointer; }
+
+        #certificateModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 600; align-items: center; justify-content: center; padding: 10px; }
+        #certificateContent { background: #fff; color: #000; padding: 30px; border-radius: 15px; width: 100%; max-width: 360px; text-align: center; border: 8px double var(--gold); font-family: 'Times New Roman', serif; }
+        
+        .list-item { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; border-left: 5px solid var(--accent); font-size: 14px; }
+        select { padding: 12px; border-radius: 10px; width: 100%; background: var(--card); color: var(--text); border: 1px solid var(--border); margin-top: 5px; }
+        .flower { position: fixed; top: -20px; font-size: 24px; animation: fall linear forwards; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="onboarding">
+        <h1 style="color:var(--accent)">Mindful Jaap</h1>
+        <p>Set up your Spiritual Identity</p>
+        <input type="text" id="userName" placeholder="Full Name">
+        <input type="text" id="userLoc" placeholder="City/Location">
+        <button onclick="saveUser()" style="background:var(--accent); color:white; border:none; padding:15px; border-radius:10px; font-size:18px; cursor:pointer;">Profile बनाएं</button>
+    </div>
+
+    <div class="global-goal-container">
+        🌍 Global Goal: 1 Crore Japs <br>
+        <div id="global-progress-bar"></div>
+        <span id="global-stats" style="font-size:9px">Loading...</span>
+    </div>
+
+    <div class="header">
+        <div>
+            <div class="live-users">● <span id="online-count">1,204</span> Live</div>
+            <div style="font-size:9px; opacity:0.6">ID: <span id="u-id">---</span></div>
+        </div>
+        <div class="badges-row">
+            <span class="badge-icon" id="badge1" title="Beginner">🥉</span>
+            <span class="badge-icon" id="badge2" title="7 Day Streak">🔥</span>
+            <span class="badge-icon" id="badge3" title="10 Malas">🎖️</span>
+            <span class="badge-icon" id="badge4" title="Brahma Muhurta">☀️</span>
+        </div>
+        <div>
+            <button onclick="openModal('leaderboardModal')" style="background:none; border:none; font-size:20px; cursor:pointer;">🏆</button>
+            <button onclick="openModal('historyModal')" style="background:none; border:none; font-size:20px; cursor:pointer;">📊</button>
+            <button onclick="openModal('settingsModal')" style="background:none; border:none; font-size:20px; cursor:pointer;">⚙️</button>
+        </div>
+    </div>
+
+    <div class="main-ui" onclick="handleTap()">
+        <div class="bead-string"></div>
+        <div class="bead" id="visual-bead" style="top: 20%;"></div>
+
+        <div style="margin-bottom:10px; font-size:16px; font-weight:bold; color:var(--accent)">🔥 Streak: <span id="streak-num">0</span> Days</div>
+        <div id="active-mantra" style="font-size:20px; font-weight:bold; margin-bottom:15px; color:var(--accent)">ॐ नमः शिवाय</div>
+        
+        <div class="counter-circle">
+            <div id="main-num">0</div>
+            <div style="font-size:12px; letter-spacing:2px;">JAPS</div>
+        </div>
+        
+        <div id="mala-info" style="margin-top:15px; font-weight:bold;">Mala: 0 | Goal: 1</div>
+        <div id="timer-display" style="font-size:12px; margin-top:5px; color:#4CAF50;">Session: 00:00</div>
+    </div>
+
+    <div id="certificateModal">
+        <div id="certificateContent">
+            <div style="font-size: 35px;">🕉️</div>
+            <h2 style="color:var(--gold); margin:5px 0;">Sadhna Certificate</h2>
+            <p>प्रमाणित किया जाता है कि</p>
+            <h3 id="cert-user" style="font-size:1.6em; margin:10px 0; text-decoration: underline;"></h3>
+            <p>ने <b>Mindful Jaap</b> पर अपनी साधना पूर्ण की।</p>
+            
+            <div style="margin:10px 0; font-size:0.9em; text-align:left; background:#fdfbf0; padding:15px; border-radius:10px; border:1px solid #eee;">
+                <div><b>Mantra:</b> <span id="cert-mantra"></span></div>
+                <div><b>Total Malas:</b> <span id="cert-malas"></span></div>
+                <div><b>Streak:</b> <span id="cert-streak"></span> Days</div>
+                <div><b>Location:</b> <span id="cert-loc"></span></div>
+            </div>
+
+            <div style="margin-top:10px; font-weight:bold; font-size:13px; color:#E1306C;">Instagram: @mindful.jaap</div>
+            <button onclick="downloadCert()" style="background:var(--gold); color:white; border:none; padding:12px 25px; border-radius:10px; margin-top:15px; font-weight:bold; cursor:pointer;">Download PNG</button>
+            <p onclick="closeModal('certificateModal')" style="margin-top:12px; cursor:pointer; opacity:0.5; font-size:12px;">Close</p>
+        </div>
+    </div>
+
+    <div id="leaderboardModal" class="modal"><button class="close-btn" onclick="closeModal('leaderboardModal')">X</button><h2>🏆 Top Sadhaks</h2><div id="leader-list"></div></div>
+
+    <div id="historyModal" class="modal"><button class="close-btn" onclick="closeModal('historyModal')">X</button><h2>📊 Stats</h2><canvas id="weeklyChart"></canvas><div id="history-list" style="margin-top:20px;"></div></div>
+
+    <div id="settingsModal" class="modal">
+        <button class="close-btn" onclick="closeModal('settingsModal')">Done</button>
+        <h2>Settings</h2>
+        <p>Goal: <select id="goalSet" onchange="updateGoal()"><option value="1">1 Mala</option><option value="11">11 Malas</option><option value="21">21 Malas</option><option value="108">108 Malas</option></select></p>
+        
+        <p>Mantra: <select id="mList" onchange="changeMantra()">
+            <option value="ॐ नमः शिवाय">ॐ नमः शिवाय</option>
+            <option value="ॐ घृणि सूर्याय नमः">ॐ घृणि सूर्याय नमः</option>
+            <option value="ॐ सोमाय नमः">ॐ सोमाय नमः</option>
+            <option value="ॐ अंगारकाय नमः">ॐ अंगारकाय नमः</option>
+            <option value="ॐ बुधाय नमः">ॐ बुधाय नमः</option>
+            <option value="ॐ बृहस्पतये नमः">ॐ बृहस्पतये नमः</option>
+            <option value="ॐ शुक्राय नमः">ॐ शुक्राय नमः</option>
+            <option value="ॐ शनैश्चराय नमः">ॐ शनैश्चराय नमः</option>
+            <option value="ॐ राहवे नमः">ॐ राहवे नमः</option>
+            <option value="ॐ केतवे नमः">ॐ केतवे नमः</option>
+            <option value="ॐ हम हनुमंते नमः">ॐ हम हनुमंते नमः</option>
+            <option value="ॐ गं गणपतये नमः">ॐ गं गणपतये नमः</option>
+            <option value="ॐ नमो भगवते वासुदेवाय">ॐ नमो भगवते वासुदेवाय</option>
+            <option value="ॐ महामृत्युंजय मंत्र">ॐ महामृत्युंजय मंत्र</option>
+            <option value="ॐ गायत्री मंत्र">ॐ गायत्री मंत्र</option>
+        </select></p>
+        
+        <p>BGM: <select id="sList" onchange="changeSound()"><option value="">None</option><option value="river">Holy River</option><option value="bell">Temple Bell</option><option value="om">Deep Om</option><option value="birds">Forest</option><option value="bowl">Singing Bowl</option></select></p>
+        <button onclick="document.body.classList.toggle('dark')" style="width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ccc; background:var(--bg); color:var(--text);">Switch Theme</button>
+    </div>
+
+    <audio id="click-sound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="alert-100" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <audio id="bgAudio" loop></audio>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('mj_mega_v10')) || { total: 0, malas: 0, streak: 0, lastDate: '', goal: 1, history: [], uid: '' };
+        let user = JSON.parse(localStorage.getItem('mj_user')) || null;
+        let sessionSec = 0; let activeM = "ॐ नमः शिवाय"; let myChart = null;
+        const sounds = { river: "https://www.soundjay.com/nature/river-1.mp3", bell: "https://www.orangefreesounds.com/wp-content/uploads/2020/09/Large-temple-bell-sound.mp3", om: "https://www.buddhanet.net/audio/om_mani_padme_hum.mp3", birds: "https://www.soundjay.com/nature/sounds/rain-forest-1.mp3", bowl: "https://www.orangefreesounds.com/wp-content/uploads/2016/11/Singing-bowl-sound.mp3" };
+
+        if(user) { document.getElementById('onboarding').style.display = 'none'; document.getElementById('u-id').innerText = db.uid; }
+
+        function saveUser() {
+            let n = document.getElementById('userName').value; let l = document.getElementById('userLoc').value;
+            if(n && l) {
+                db.uid = n.toLowerCase().split(' ')[0] + "_" + Math.floor(Math.random()*9999);
+                user = { name: n, loc: l };
+                localStorage.setItem('mj_user', JSON.stringify(user));
+                save(); location.reload();
+            }
+        }
+
+        function handleTap() {
+            db.total++; let beads = db.total % 108;
+            document.getElementById('visual-bead').style.transform = `translateY(${beads * 1.3}px)`;
+            document.getElementById('click-sound').currentTime=0; document.getElementById('click-sound').play();
+            if(beads === 100) { document.getElementById('alert-100').play(); if(navigator.vibrate) navigator.vibrate([300,100,300]); }
+            if(beads === 0 && db.total !== 0) {
+                db.malas++; checkStreak(); checkBadges(); spawnFlowers();
+                db.history.push({ mantra: activeM, time: new Date().toISOString(), day: new Date().toLocaleDateString('en-US', {weekday: 'short'}) });
+                if(db.malas >= db.goal) showCert();
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            save();
+            document.getElementById('main-num').innerText = db.total;
+            document.getElementById('streak-num').innerText = db.streak;
+            document.getElementById('mala-info').innerText = `Mala: ${db.malas} | Goal: ${db.goal}`;
+            checkBadges();
+            let global = 6542100 + db.total;
+            document.getElementById('global-stats').innerText = `Current: ${global.toLocaleString()} (65%)`;
+            document.getElementById('global-progress-bar').style.width = '65%';
+        }
+
+        function checkBadges() {
+            if(db.total >= 1) document.getElementById('badge1').classList.add('active');
+            if(db.streak >= 7) document.getElementById('badge2').classList.add('active');
+            if(db.malas >= 10) document.getElementById('badge3').classList.add('active');
+            let h = new Date().getHours(); if(h >= 4 && h <= 7) document.getElementById('badge4').classList.add('active');
+        }
+
+        function showCert() {
+            document.getElementById('cert-user').innerText = user.name;
+            document.getElementById('cert-mantra').innerText = activeM;
+            document.getElementById('cert-malas').innerText = db.malas;
+            document.getElementById('cert-streak').innerText = db.streak;
+            document.getElementById('cert-loc').innerText = user.loc;
+            document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('certificateModal').style.display = 'flex';
+        }
+
+        function downloadCert() {
+            html2canvas(document.getElementById('certificateContent')).then(canvas => {
+                let link = document.createElement('a'); link.download = 'Sadhna_Cert.png'; link.href = canvas.toDataURL(); link.click();
+            });
+        }
+
+        function save() { localStorage.setItem('mj_mega_v10', JSON.stringify(db)); }
+        function checkStreak() {
+            let today = new Date().toDateString();
+            if(db.lastDate !== today) {
+                let yest = new Date(); yest.setDate(yest.getDate()-1);
+                db.streak = (db.lastDate === yest.toDateString()) ? db.streak + 1 : 1;
+                db.lastDate = today;
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; if(id==='historyModal'){renderGraph(); renderList();} if(id==='leaderboardModal')renderLeaderboard(); }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        setInterval(() => {
+            sessionSec++; let m = Math.floor(sessionSec/60); let s = sessionSec % 60;
+            document.getElementById('timer-display').innerText = `Session: ${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }, 1000);
+
+        function renderLeaderboard() {
+            let names = ["Aryan_Pro", "Sadhak_Rahul", "Mira_108", db.uid, "Vashu_Shailesh", "Vinamrata_P", "Zen_Sadhak", "Bhakti_88"];
+            document.getElementById('leader-list').innerHTML = names.map((n, i) => `<div class="list-item"><span>#${i+1} ${n}</span> <b>${50-i} Malas</b></div>`).join('');
+        }
+
+        function renderList() {
+            document.getElementById('history-list').innerHTML = db.history.slice().reverse().slice(0, 5).map(h => `<div class="list-item"><span>${h.mantra}</span> <small>${new Date(h.time).toLocaleTimeString()}</small></div>`).join('') || "No history yet.";
+        }
+
+        function renderGraph() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, { type: 'line', data: { labels: ['S','M','T','W','T','F','S'], datasets: [{ label: 'Malas', data: [2,4,3,5,2,3,6], borderColor: '#ff9800', fill: true, tension: 0.4 }] } });
+        }
+
+        function spawnFlowers() {
+            for(let i=0; i<15; i++) {
+                let f = document.createElement('div'); f.className='flower'; f.innerText='🌸';
+                f.style.left = Math.random()*100+'vw'; f.style.animationDuration = (Math.random()*2+2)+'s';
+                document.body.appendChild(f); setTimeout(()=>f.remove(), 3500);
+            }
+        }
+
+        function changeMantra() { activeM = document.getElementById('mList').value; document.getElementById('active-mantra').innerText = activeM; }
+        function changeSound() { let s = document.getElementById('sList').value; let b = document.getElementById('bgAudio'); if(s){b.src=sounds[s]; b.play();}else{b.pause();} }
+        function updateGoal() { db.goal = document.getElementById('goalSet').value; updateUI(); }
+
+        setInterval(() => { document.getElementById('online-count').innerText = (1200 + Math.floor(Math.random() * 50)).toLocaleString(); }, 5000);
+        updateUI();
+    </script>
+</body>
+</html>
